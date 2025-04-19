@@ -18,9 +18,6 @@ import ast
 from collections.abc import Sequence
 import copy
 from typing import Any
-import time
-import signal
-
 
 import code_manipulation
 import programs_database
@@ -89,66 +86,19 @@ def _sample_to_program(
   return evolved_function, str(program)
 
 
-class TimeoutException(Exception):
-  """Exception raised when code execution exceeds the time limit."""
-  pass
-
-
 class Sandbox:
-  """Sandbox for executing generated code with timeout and error handling."""
-
-  def __init__(self, timeout_seconds: int = 5):
-    """Initialize the sandbox with a specified timeout."""
-    self.timeout_seconds = timeout_seconds
-
-  def _timeout_handler(self, signum, frame):
-    """Handler for the timeout signal."""
-    raise TimeoutException("Execution timed out")
+  """Sandbox for executing generated code."""
 
   def run(
-          self,
-          program: str,
-          function_to_run: str,
-          test_input: str,
-          timeout_seconds: int = None,
+      self,
+      program: str,
+      function_to_run: str,
+      test_input: str,
+      timeout_seconds: int,
   ) -> tuple[Any, bool]:
-    """
-    Executes `function_to_run(test_input)` inside the sandbox and
-    returns the result and whether execution succeeded.
-    """
-    if timeout_seconds is None:
-      timeout_seconds = self.timeout_seconds
-
-    # Set the signal handler for timeout
-    signal.signal(signal.SIGALRM, self._timeout_handler)
-    signal.alarm(timeout_seconds)  # Start the timer for the timeout
-
-    try:
-      local_env = {}
-      # Execute the provided program code inside the sandbox (local environment)
-      exec(program, {}, local_env)
-
-      # Get the function to run
-      func = local_env.get(function_to_run)
-
-      if callable(func):
-        # Run the function with the provided test_input
-        result = func(test_input)
-        signal.alarm(0)  # Disable the alarm
-        return result, True
-      else:
-        print(f"Function {function_to_run} is not callable in the provided code.")
-        signal.alarm(0)
-        return None, False
-
-    except TimeoutException as te:
-      print(f"Timeout: {te}")
-      signal.alarm(0)  # Disable the alarm after timeout exception
-      return None, False
-    except Exception as e:
-      print(f"Error during execution: {e}")
-      signal.alarm(0)  # Disable the alarm after exception
-      return None, False
+    """Returns `function_to_run(test_input)` and whether execution succeeded."""
+    raise NotImplementedError(
+        'Must provide a sandbox for executing untrusted code.')
 
 
 def _calls_ancestor(program: str, function_to_evolve: str) -> bool:
@@ -193,14 +143,13 @@ class Evaluator:
     new_function, program = _sample_to_program(
         sample, version_generated, self._template, self._function_to_evolve)
 
+    """metrics = multi_score(new_function, self._inputs)
+    scores_per_test = {"composite": metrics["composite"],
+                       "perf": metrics["performance"],
+                       "time": metrics["runtime"],
+                       "cc": metrics["cc"]}"""
+
     scores_per_test = {}
-
-    # metrics = multi_score(new_function, self._inputs)
-    # scores_per_test = {"composite": metrics["composite"],
-    #                   "perf": metrics["performance"],
-    #                   "time": metrics["runtime"],
-     #                  "cc": metrics["cc"]}
-
 
     for current_input in self._inputs:
       test_output, runs_ok = self._sandbox.run(
