@@ -21,13 +21,17 @@ def _avg_cyclomatic_complexity(source: str) -> float:
 
 
 def _time_func(func, arg, n: int = 3) -> float:
-    """跑 n 次取平均运行时间(秒)。"""
+    """跑 n 次取平均运行时间"""
     times = []
     for _ in range(n):
-        start = time.perf_counter()  # 单调时钟，高精度 :contentReference[oaicite:1]{index=1}
-        func(arg)
+        start = time.perf_counter()  # 单调时钟，高精度
+        if callable(func):  # 检查 func 是否是可调用的
+            func(arg)
+        else:
+            print(f"{func} is not callable")
         times.append(time.perf_counter() - start)
     return statistics.mean(times)
+
 
 
 def score(program, test_inputs) -> dict:
