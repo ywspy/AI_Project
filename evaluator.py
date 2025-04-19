@@ -143,11 +143,14 @@ class Evaluator:
     new_function, program = _sample_to_program(
         sample, version_generated, self._template, self._function_to_evolve)
 
-    metrics = multi_score(new_function, self._inputs)
-    scores_per_test = {"composite": metrics["composite"],
-                       "perf": metrics["performance"],
-                       "time": metrics["runtime"],
-                       "cc": metrics["cc"]}
+    scores_per_test = {}
+
+    # metrics = multi_score(new_function, self._inputs)
+    # scores_per_test = {"composite": metrics["composite"],
+    #                   "perf": metrics["performance"],
+    #                   "time": metrics["runtime"],
+     #                  "cc": metrics["cc"]}
+
 
     for current_input in self._inputs:
       test_output, runs_ok = self._sandbox.run(
