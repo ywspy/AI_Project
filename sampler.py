@@ -60,3 +60,4 @@ class Sampler:
         chosen_evaluator = np.random.choice(self._evaluators)
         chosen_evaluator.analyse(
             sample, prompt.island_id, prompt.version_generated)
+        print(f"Sample: {sample}.One round of sampling completed. Stopping now.")
