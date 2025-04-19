@@ -21,6 +21,7 @@ from typing import Any
 
 import code_manipulation
 import programs_database
+from evaluate import score as multi_score
 
 
 class _FunctionLineVisitor(ast.NodeVisitor):
@@ -142,7 +143,12 @@ class Evaluator:
     new_function, program = _sample_to_program(
         sample, version_generated, self._template, self._function_to_evolve)
 
-    scores_per_test = {}
+    metrics = multi_score(new_function, self._inputs)
+    scores_per_test = {"composite": metrics["composite"],
+                       "perf": metrics["performance"],
+                       "time": metrics["runtime"],
+                       "cc": metrics["cc"]}
+
     for current_input in self._inputs:
       test_output, runs_ok = self._sandbox.run(
           program, self._function_to_run, current_input, self._timeout_seconds)
