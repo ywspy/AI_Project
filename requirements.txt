@@ -1,0 +1,11 @@
+transformers
+bitsandbytes
+torch
+absl-py
+scipy
+flask
+flask-cors
+numba
+tensorboard
+tensorboardX
+
