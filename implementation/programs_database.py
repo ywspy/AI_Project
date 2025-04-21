@@ -116,6 +116,7 @@ class ProgramsDatabase:
         """Returns a prompt containing implementations from one chosen island."""
         island_id = np.random.randint(len(self._islands))
         code, version_generated = self._islands[island_id].get_prompt()
+        print(f"Generated prompt:\n{code}")
         return Prompt(code, version_generated, island_id)
 
     def _register_program_in_island(
