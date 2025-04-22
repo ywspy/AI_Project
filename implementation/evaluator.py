@@ -35,7 +35,7 @@ class _FunctionLineVisitor(ast.NodeVisitor):
         self._target_function_name: str = target_function_name
         self._function_end_line: int | None = None
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+    def visit_FunctionDef(self, node: Any) -> None:  # pylint: disable=invalid-name
         """Collects the end line number of the target function."""
         if node.name == self._target_function_name:
             self._function_end_line = node.end_lineno
@@ -43,15 +43,9 @@ class _FunctionLineVisitor(ast.NodeVisitor):
 
     @property
     def function_end_line(self) -> int:
-        """Line number of the final line of function target_function_name."""
+        """Line number of the final line of function `target_function_name`."""
         assert self._function_end_line is not None  # Check internal correctness.
         return self._function_end_line
-
-
-def _remove_code_block_markers(generated_code: str) -> str:
-    """Removes markdown code block markers like '```python' and '```'."""
-    code = generated_code.replace('```python', '').replace('', '').strip()
-    return code
 
 
 def _trim_function_body(generated_code: str) -> str:
@@ -64,14 +58,11 @@ def _trim_function_body(generated_code: str) -> str:
     if not generated_code:
         return ''
 
-    # Remove markdown code block markers
-    clean_code = _remove_code_block_markers(generated_code)
-
-    print('cleaned generated_code:')
-    print(clean_code)  # Print the cleaned input code for debugging
+    print('generated_code:')
+    print(generated_code)  # Print the input code for debugging
 
     # Add a fake function header to ensure parsing works as expected
-    code = f'def fake_function_header():\n{clean_code}'
+    code = f'def fake_function_header():\n{generated_code}'
 
     tree = None
     # Try parsing and progressively cut off code until the parser succeeds.
