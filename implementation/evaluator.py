@@ -103,7 +103,7 @@ def _sample_to_program(
     program = copy.deepcopy(template)
     evolved_function = program.get_function(function_to_evolve)
     evolved_function.body = body
-    print(f'program:{str(program)}')
+    print(f'evolved_function:{str(evolved_function)}')
     return evolved_function, str(program)
 
 
