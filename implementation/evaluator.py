@@ -59,7 +59,7 @@ def _trim_function_body(generated_code: str) -> str:
         return ''
 
     print('generated_code:')
-    print(generated_code)  # Print the input code
+    print(generated_code)  # Print the input code for debugging
 
     # Add a fake function header to ensure parsing works as expected
     code = f'def fake_function_header():\n{generated_code}'
@@ -79,7 +79,7 @@ def _trim_function_body(generated_code: str) -> str:
             # Check if we are deleting too much code and avoid empty body
             if len(code.splitlines()) < 3:  # At least function header + one line
                 print("Warning: Code was truncated too much, returning empty string.")
-                return ''
+                return code  # Returning the partially truncated code instead of empty string
 
     if not code:
         return ''
@@ -91,11 +91,11 @@ def _trim_function_body(generated_code: str) -> str:
     # Extract the function body between the header and function end line
     body_lines = code.splitlines()[1:visitor.function_end_line]
 
-    # Debugging output: Print extracted function body without f-string
-    print("Extracted function body:")
-    print('\n'.join(body_lines))  # Directly print without using f-string
+    # Debugging output: Print extracted function body
+    print(f"Extracted function body:\n{repr('\n'.join(body_lines))}")  # Use repr to handle escape sequences
 
     return '\n'.join(body_lines) + '\n\n'
+
 
 def _sample_to_program(
         generated_code: str,
