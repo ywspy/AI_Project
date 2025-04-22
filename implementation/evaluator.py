@@ -49,34 +49,43 @@ class _FunctionLineVisitor(ast.NodeVisitor):
 
 
 def _trim_function_body(generated_code: str) -> str:
-     # Check if the code is surrounded by ```python
-    if generated_code.startswith("```python") and generated_code.endswith("```"):
-        # Remove the ```python and ``` markers
-        clean_code = generated_code[8:-3].strip()
+    """Extracts the body of the generated function, trimming anything after it.
 
+    RZ: the arg generated_code must only include the body of the generated function.
+    Please note that the indentation is REQUIRED !!!
+    """
+
+    if not generated_code:
+        return ''
+
+    # Adding a fake function header to ensure we parse the generated code as a function.
+    code = f'def fake_function_header():\n{generated_code}'
+
+    tree = None
+    # Try parsing and progressively cut off code until the parser succeeds.
+    while tree is None:
         try:
-            # Parse the clean code to create an AST (abstract syntax tree)
-            tree = ast.parse(clean_code)
-
-            # Initialize the function body as an empty string
-            function_body = ""
-
-            # Loop through the nodes in the parsed AST to find the function definition
-            for node in tree.body:
-                if isinstance(node, ast.FunctionDef):
-                    # Extract the function body (excluding the function signature and docstring)
-                    function_body = "\n".join(ast.unparse(n) for n in node.body)
-                    break
-
-            # Return the function body without the function signature or docstring
-            return function_body
-
+            tree = ast.parse(code)
         except SyntaxError as e:
-            print(f"Error parsing code: {e}")
-            return ""  # Return empty string if parsing fails
-    else:
-        # If not surrounded by ```python, return the code as is
-        return generated_code
+            print(f"SyntaxError at line {e.lineno}: {e.text}")  # Debugging log
+            code = '\n'.join(code.splitlines()[:e.lineno - 1])  # Remove code after the error
+
+            # Check if we are deleting too much code and avoid empty body
+            if len(code.splitlines()) < 3:
+                print("Warning: Code was truncated too much, returning empty string.")
+                return ''
+
+    if not code:
+        return ''
+
+    # Use _FunctionLineVisitor to locate the end of the function body
+    visitor = _FunctionLineVisitor('fake_function_header')
+    visitor.visit(tree)
+
+    # Extract function body between the header and function end line
+    body_lines = code.splitlines()[1:visitor.function_end_line]
+
+    return '\n'.join(body_lines) + '\n\n'
 
 
 def _sample_to_program(
