@@ -58,8 +58,6 @@ def _trim_function_body(generated_code: str) -> str:
     --------------
     Please note that the indentation is REQUIRED !!!
     """
-    print('generated_code:')
-    print(generated_code)
     if not generated_code:
         return ''
 
