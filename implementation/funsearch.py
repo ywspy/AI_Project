@@ -48,6 +48,23 @@ def _extract_function_names(specification: str) -> Tuple[str, str]:
     return evolve_functions[0], run_functions[0]
 
 
+def print_all_island_info(database):
+    """Prints information of all islands."""
+    for island_id, island in database.programs_per_island.items():
+        print(f"Island {island_id}:")
+
+        # Print the best program and score for the island
+        print(f"  Best Program: {island.best_program_per_island}")
+        print(f"  Best Score: {island.best_score_per_island}")
+
+        # Print all programs in the island
+        print("  All Programs in this Island:")
+        for program in island.programs:
+            print(f"    Program: {program}")
+
+        # Additional detailed information
+        print("-" * 50)
+
 def main(
         specification: str,
         inputs: Sequence[Any],
@@ -100,3 +117,5 @@ def main(
     # sampler will do any work.
     for s in samplers:
         s.sample(profiler=profiler)
+
+    print_all_island_info(database)
