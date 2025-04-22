@@ -78,7 +78,7 @@ def _trim_function_body(generated_code: str) -> str:
 
             # Check if we are deleting too much code and avoid empty body
             if len(code.splitlines()) < 3:  # At least function header + one line
-                print("Warning: Code was truncated too much, returning empty string.")
+                print("Warning: Code was truncated too much, returning partial code.")
                 return code  # Returning the partially truncated code instead of empty string
 
     if not code:
