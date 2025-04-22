@@ -63,6 +63,8 @@ def _trim_function_body(generated_code: str) -> str:
         return ''
 
     code = f'def fake_function_header():\n{generated_code}'
+    print('code:')
+    print(code)
 
     tree = None
     # We keep trying and deleting code from the end until the parser succeeds.
@@ -93,7 +95,6 @@ def _sample_to_program(
     RZ: This function removes the code after the generated function body.
     """
     body = _trim_function_body(generated_code)
-    print('body of generated_code')
     print(body)
     if version_generated is not None:
         body = code_manipulation.rename_function_calls(
