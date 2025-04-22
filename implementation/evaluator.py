@@ -58,55 +58,50 @@ def _trim_function_body(generated_code: str) -> str:
     --------------
     Please note that the indentation is REQUIRED !!!
     """
+    print('generated_code:')
+    print(generated_code)
+    if not generated_code:
+        return ''
 
-    def _trim_function_body(generated_code: str) -> str:
-        """Extracts the body of the generated function, trimming anything after it.
+    # If the code includes function header, we don't add the fake header
+    if generated_code.strip().startswith('def '):
+        # The code already contains the full function definition, so no need for a fake header
+        code = generated_code
+    else:
+        # If the function body is provided alone, add a fake function header to parse it correctly
+        code = f'def fake_function_header():\n{generated_code}'
 
-        The argument `generated_code` must only include the body of the generated function.
-        Please note that the indentation is REQUIRED!!!
-        """
-        print('generated_code:')
-        print(generated_code)
-        if not generated_code:
-            return ''
+    # Get the function name dynamically (from 'def ' part)
+    function_name = code.split('(')[0].split()[1]  # Extract the function name from the definition line
 
-        # If the code includes function header, we don't add the fake header
-        if generated_code.strip().startswith('def '):
-            # The code already contains the full function definition, so no need for a fake header
-            code = generated_code
-        else:
-            # If the function body is provided alone, add a fake function header to parse it correctly
-            code = f'def fake_function_header():\n{generated_code}'
+    tree = None
+    # We keep trying and deleting code from the end until the parser succeeds.
+    while tree is None:
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as e:
+            # Debugging log to see which part is causing the issue
+            print(f"SyntaxError at line {e.lineno}: {e.text}")
+            # Remove code after the error
+            code = '\n'.join(code.splitlines()[:e.lineno - 1])
 
-        # Get the function name dynamically (from 'def ' part)
-        function_name = code.split('(')[0].split()[1]  # Extract the function name from the definition line
+            # If truncation removes too much of the body, stop
+            if len(code.splitlines()) < 3:
+                print("Warning: Code was truncated too much, returning empty string.")
+                return ''
 
-        tree = None
-        # We keep trying and deleting code from the end until the parser succeeds.
-        while tree is None:
-            try:
-                tree = ast.parse(code)
-            except SyntaxError as e:
-                # Debugging log to see which part is causing the issue
-                print(f"SyntaxError at line {e.lineno}: {e.text}")
-                # Remove code after the error
-                code = '\n'.join(code.splitlines()[:e.lineno - 1])
+    if not code:
+        return ''
 
-                # If truncation removes too much of the body, stop
-                if len(code.splitlines()) < 3:
-                    print("Warning: Code was truncated too much, returning empty string.")
-                    return ''
+    # Use _FunctionLineVisitor to locate the end of the function body
+    visitor = _FunctionLineVisitor(function_name)  # Pass the dynamic function name
+    visitor.visit(tree)
+    body_lines = code.splitlines()[1:visitor.function_end_line]
+    if not body_lines:
+        return ''
+    return '\n'.join(body_lines) + '\n\n'
 
-        if not code:
-            return ''
 
-        # Use _FunctionLineVisitor to locate the end of the function body
-        visitor = _FunctionLineVisitor(function_name)  # Pass the dynamic function name
-        visitor.visit(tree)
-        body_lines = code.splitlines()[1:visitor.function_end_line]
-        if not body_lines:
-            return ''
-        return '\n'.join(body_lines) + '\n\n'
 
 
 def _sample_to_program(
