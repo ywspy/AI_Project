@@ -92,7 +92,7 @@ def _trim_function_body(generated_code: str) -> str:
     body_lines = code.splitlines()[1:visitor.function_end_line]
 
     # Debugging output: Print extracted function body
-    print(f"Extracted function body:\n{'\n'.join(body_lines)}")
+    print(f"Extracted function body:\n{repr('\n'.join(body_lines))}")  # Use repr to handle escape sequences
 
     return '\n'.join(body_lines) + '\n\n'
 
