@@ -51,37 +51,40 @@ class _FunctionLineVisitor(ast.NodeVisitor):
 def _trim_function_body(generated_code: str) -> str:
     """Extracts the body of the generated function, trimming anything after it.
 
-    RZ: the arg generated_code must only include the body of the generated function (an example is shown below):
-    --------------
-        a = item
-        return a
-    --------------
+    RZ: the arg generated_code must only include the body of the generated function.
     Please note that the indentation is REQUIRED !!!
     """
 
     if not generated_code:
         return ''
 
+    # Adding a fake function header to ensure we parse the generated code as a function.
     code = f'def fake_function_header():\n{generated_code}'
-    print('code:')
-    print(code)
 
     tree = None
-    # We keep trying and deleting code from the end until the parser succeeds.
+    # Try parsing and progressively cut off code until the parser succeeds.
     while tree is None:
         try:
             tree = ast.parse(code)
         except SyntaxError as e:
-            # RZ: "e.lineno - 1" locates the line number of the lost python code
-            code = '\n'.join(code.splitlines()[:e.lineno - 1])
+            print(f"SyntaxError at line {e.lineno}: {e.text}")  # Debugging log
+            code = '\n'.join(code.splitlines()[:e.lineno - 1])  # Remove code after the error
+
+            # Check if we are deleting too much code and avoid empty body
+            if len(code.splitlines()) < 3:
+                print("Warning: Code was truncated too much, returning empty string.")
+                return ''
 
     if not code:
-        # Nothing could be saved from `generated_code`
         return ''
 
+    # Use _FunctionLineVisitor to locate the end of the function body
     visitor = _FunctionLineVisitor('fake_function_header')
     visitor.visit(tree)
+
+    # Extract function body between the header and function end line
     body_lines = code.splitlines()[1:visitor.function_end_line]
+
     return '\n'.join(body_lines) + '\n\n'
 
 
