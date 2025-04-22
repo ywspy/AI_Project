@@ -50,7 +50,7 @@ class _FunctionLineVisitor(ast.NodeVisitor):
 
 def _remove_code_block_markers(generated_code: str) -> str:
     """Removes markdown code block markers like '```python' and '```'."""
-    code = generated_code.replace('```python', '').replace('```', '').strip()
+    code = generated_code.replace('```python', '').replace('', '').strip()
     return code
 
 
