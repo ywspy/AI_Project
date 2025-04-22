@@ -104,6 +104,8 @@ def _trim_function_body(generated_code: str) -> str:
         visitor = _FunctionLineVisitor(function_name)  # Pass the dynamic function name
         visitor.visit(tree)
         body_lines = code.splitlines()[1:visitor.function_end_line]
+        if not body_lines:
+            return ''
         return '\n'.join(body_lines) + '\n\n'
 
 
