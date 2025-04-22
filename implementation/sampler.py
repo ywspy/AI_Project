@@ -95,13 +95,11 @@ class Sampler:
                 break
             try:
                 prompt = self._database.get_prompt()
-                print(f'prompt:{prompt}')
                 reset_time = time.time()
                 samples = self._llm.draw_samples(prompt.code)
                 sample_time = (time.time() - reset_time) / self._samples_per_prompt
                 # This loop can be executed in parallel on remote evaluator machines.
                 for sample in samples:
-                    print(f'sample:{sample}')
                     self._global_sample_nums_plus_one()  # RZ: add _global_sample_nums
                     cur_global_sample_nums = self._get_global_sample_nums()
                     chosen_evaluator: evaluator.Evaluator = np.random.choice(self._evaluators)
