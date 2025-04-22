@@ -54,7 +54,8 @@ def _trim_function_body(generated_code: str) -> str:
     RZ: the arg generated_code must only include the body of the generated function.
     Please note that the indentation is REQUIRED !!!
     """
-
+    print('generated_code:')
+    print(generated_code)
     if not generated_code:
         return ''
 
