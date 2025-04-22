@@ -93,6 +93,8 @@ def _sample_to_program(
     RZ: This function removes the code after the generated function body.
     """
     body = _trim_function_body(generated_code)
+    print('body of generated_code')
+    print(body)
     if version_generated is not None:
         body = code_manipulation.rename_function_calls(
             code=body,
@@ -103,7 +105,6 @@ def _sample_to_program(
     program = copy.deepcopy(template)
     evolved_function = program.get_function(function_to_evolve)
     evolved_function.body = body
-    print(f'evolved_function:{str(evolved_function)}')
     return evolved_function, str(program)
 
 
