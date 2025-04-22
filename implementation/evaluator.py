@@ -54,12 +54,14 @@ def _trim_function_body(generated_code: str) -> str:
     RZ: the arg generated_code must only include the body of the generated function.
     Please note that the indentation is REQUIRED !!!
     """
-    print('generated_code:')
-    print(generated_code)
+
     if not generated_code:
         return ''
 
-    # Adding a fake function header to ensure we parse the generated code as a function.
+    print('generated_code:')
+    print(generated_code)  # Print the input code
+
+    # Add a fake function header to ensure parsing works as expected
     code = f'def fake_function_header():\n{generated_code}'
 
     tree = None
@@ -69,10 +71,13 @@ def _trim_function_body(generated_code: str) -> str:
             tree = ast.parse(code)
         except SyntaxError as e:
             print(f"SyntaxError at line {e.lineno}: {e.text}")  # Debugging log
-            code = '\n'.join(code.splitlines()[:e.lineno - 1])  # Remove code after the error
+            # Debug: Print the code after truncation
+            print(f"Truncated code:\n{code}")
+            # Remove code after the error
+            code = '\n'.join(code.splitlines()[:e.lineno - 1])
 
             # Check if we are deleting too much code and avoid empty body
-            if len(code.splitlines()) < 3:
+            if len(code.splitlines()) < 3:  # At least function header + one line
                 print("Warning: Code was truncated too much, returning empty string.")
                 return ''
 
@@ -83,8 +88,11 @@ def _trim_function_body(generated_code: str) -> str:
     visitor = _FunctionLineVisitor('fake_function_header')
     visitor.visit(tree)
 
-    # Extract function body between the header and function end line
+    # Extract the function body between the header and function end line
     body_lines = code.splitlines()[1:visitor.function_end_line]
+
+    # Debugging output: Print extracted function body
+    print(f"Extracted function body:\n{'\n'.join(body_lines)}")
 
     return '\n'.join(body_lines) + '\n\n'
 
