@@ -58,7 +58,8 @@ def _reduce_score(scores_per_test: ScoresPerTest) -> float:
     """
     # TODO RZ: change the code to average the score of each test.
     # return scores_per_test[list(scores_per_test.keys())[-1]]
-    return scores_per_test["composite"]
+    test_scores = [scores_per_test[k] for k in scores_per_test.keys()]
+    return sum(test_scores) / len(test_scores)
 
 
 def _get_signature(scores_per_test: ScoresPerTest) -> Signature:
