@@ -220,21 +220,10 @@ class Evaluator:
 
         elapsed = time.time() - start_time
 
-        # 5) Register in database
-        if scores_per_test:
-            self._database.register_program(
-                new_function,
-                island_id,
-                scores_per_test,
-                **kwargs,
-                evaluate_time=elapsed,
-            )
-        else:
-            # If no scores, push to profiler if provided
-            profiler: profile.Profiler = kwargs.get("profiler", None)
-            if profiler:
-                new_function.global_sample_nums = kwargs.get("global_sample_nums", None)
-                new_function.score = None
-                new_function.sample_time = kwargs.get("sample_time", None)
-                new_function.evaluate_time = elapsed
-                profiler.register_function(new_function)
+        self._database.register_program(
+            new_function,
+            island_id,
+            scores_per_test,
+            **kwargs,
+            evaluate_time=elapsed
+        )
