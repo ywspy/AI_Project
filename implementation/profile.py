@@ -114,6 +114,9 @@ class Profiler:
         print(f"Runtime    : {metrics['runtime']:.4f}s")
         print(f"Cyclomatic : {metrics['cc']:.2f}")
         print(f"Composite  : {metrics['composite']:.4f}")
+        print(f'Sample time  : {str(sample_time)}')
+        print(f'Evaluate time: {str(evaluate_time)}')
+        print(f'Sample orders: {str(sample_orders)}')
         print(f'======================================================\n\n')
 
         # update best function
