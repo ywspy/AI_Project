@@ -8,4 +8,5 @@ flask-cors
 numba
 tensorboard
 tensorboardX
-
+radon>=5.0.0
+code2flow>=1.6.2
