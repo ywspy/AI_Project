@@ -232,6 +232,13 @@ class Island:
         cluster_scores = np.array(
             [self._clusters[signature].score for signature in signatures])
 
+        print(f"[DEBUG] clusters={len(self._clusters)} "
+              f"min={cluster_scores.min() if cluster_scores.size else 'N/A'} "
+              f"max={cluster_scores.max() if cluster_scores.size else 'N/A'} "
+              f"any_nan={np.isnan(cluster_scores).any()} "
+              f"any_inf={np.isinf(cluster_scores).any()}")
+        assert np.all(np.isfinite(cluster_scores)), "cluster_scores contain NaN/Inf!"
+
         # Convert scores to probabilities using softmax with temperature schedule.
         period = self._cluster_sampling_temperature_period
         temperature = self._cluster_sampling_temperature_init * (
