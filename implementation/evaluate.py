@@ -1,32 +1,41 @@
+"""
+Multi–objective scorer used by the Sandbox.
+
+It returns a dict with four finite metrics:
+    performance  – average fitness returned by `program`
+    runtime      – average wall-clock time (seconds)
+    cc           – mean cyclomatic complexity
+    composite    – weighted sum ALPHA – BETA – GAMMA  (higher is better)
+"""
+
+from __future__ import annotations
 import inspect
 import statistics
 import time
-from typing import Callable, Any, Dict, List
+from typing import Any, Callable, Dict, List
 
-from radon.complexity import cc_visit
 import numpy as np
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Weights for the composite score
-ALPHA = 1.0      # performance weight
-BETA  = 0.1      # runtime penalty
-GAMMA = 0.05     # cyclomatic-complexity penalty
-# ──────────────────────────────────────────────────────────────────────────────
+from radon.complexity import cc_visit
 
 
-# ──────────────────────────────  helpers  ─────────────────────────────────────
-def _avg_cyclomatic_complexity(source: str) -> float:
-    """Mean CC over all blocks returned by radon; at least 1.0."""
-    blocks = cc_visit(source)
-    if not blocks:
-        return 1.0
-    return max(statistics.mean(b.complexity for b in blocks), 1.0)
+# ────────────────────────────────────────── weights
+ALPHA = 1.0      # reward for performance
+BETA  = 0.1      # penalty per second
+GAMMA = 0.05     # penalty per CC point
+# ───────────────────────────────────────────────────
+
+
+# ───────────────────────── helpers ─────────────────────────
+def _avg_cyclomatic_complexity(src: str) -> float:
+    """Mean cyclomatic complexity over all code blocks (min 1.0)."""
+    blocks = cc_visit(src)
+    return max(statistics.mean(b.complexity for b in blocks) if blocks else 1.0, 1.0)
 
 
 def _time_func(func: Callable, arg: Any, runs: int = 3) -> float:
     """
     Average wall-clock time to run *func(arg)*, never returning 0.
-    We **do not unpack arg** – every instance is passed verbatim.
+    `arg` is passed verbatim (no **kw unpacking!).
     """
     elapsed: List[float] = []
     for _ in range(runs):
@@ -35,54 +44,45 @@ def _time_func(func: Callable, arg: Any, runs: int = 3) -> float:
         elapsed.append(time.perf_counter() - start)
 
     mean_rt = statistics.mean(elapsed)
-    return max(mean_rt, 1e-6)        # avoid zero-runtime → 1/0
-# ──────────────────────────────────────────────────────────────────────────────
+    return max(mean_rt, 1e-6)         # avoid 0 → div/weight issues
+# ────────────────────────────────────────────────────────────
 
 
-def score(program: Callable, test_inputs: List[Any]) -> Dict[str, float]:
+# ───────────────────────── main entry ──────────────────────
+def score(program: Callable, data: Any) -> Dict[str, float]:
     """
-    Multi-objective evaluation of *program* on *test_inputs*.
+    Compute all four metrics in one call.
 
-    Returns a dict with keys
-        {performance | runtime | cc | composite}
-    All values are guaranteed to be finite.
+    *data* is the **entire dataset** (commonly a nested dict).
+    The caller guarantees `program(data)` is the right way
+    to evaluate fitness for this problem.
     """
-    perf:  List[float] = []
-    rts:   List[float] = []
+    # 1. runtime  (average over a few runs)
+    runtime = _time_func(program, data)
 
-    # ── run the program on every instance ────────────────────────────────────
-    for instance in test_inputs:
-        # 1) runtime
-        rts.append(_time_func(program, instance))
+    # 2. performance  (single evaluation is enough)
+    perf_val = program(data)
+    if not isinstance(perf_val, (int, float)):
+        raise ValueError("Program must return a numeric score (int|float).")
 
-        # 2) performance (program must return a number)
-        result = program(instance)
-        if not isinstance(result, (int, float)):
-            raise ValueError("Program must return a numeric score.")
-        perf.append(result)
-    # ─────────────────────────────────────────────────────────────────────────
+    # 3. cyclomatic complexity
+    cc_val = _avg_cyclomatic_complexity(inspect.getsource(program))
 
-    performance = statistics.mean(perf)
-    runtime     = statistics.mean(rts)
-
-    # 3) cyclomatic complexity of the program source
-    src = inspect.getsource(program)
-    cc  = _avg_cyclomatic_complexity(src)
-
-    # 4) safety clamp: all metrics must be finite
-    if not np.isfinite(performance):
-        performance = -1e9
+    # 4. clamp to finite numbers
+    if not np.isfinite(perf_val):
+        perf_val = -1e9
     if not np.isfinite(runtime):
         runtime = 1e6
-    if not np.isfinite(cc):
-        cc = 1e6
+    if not np.isfinite(cc_val):
+        cc_val = 1e6
 
-    # 5) composite
-    composite = ALPHA * performance - BETA * runtime - GAMMA * cc
+    # 5. composite
+    composite = ALPHA * perf_val - BETA * runtime - GAMMA * cc_val
 
     return {
-        "performance": performance,
+        "performance": perf_val,
         "runtime": runtime,
-        "cc": cc,
+        "cc": cc_val,
         "composite": composite,
     }
+# ───────────────────────────────────────────────────────────
