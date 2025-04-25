@@ -26,7 +26,6 @@ import profile
 
 from implementation import code_manipulation
 from implementation import programs_database
-from evaluate import score as multiobj_score
 
 
 class _FunctionLineVisitor(ast.NodeVisitor):
