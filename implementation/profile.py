@@ -104,24 +104,25 @@ class Profiler:
         function_str = str(function).strip('\n')
         sample_time = function.sample_time
         evaluate_time = function.evaluate_time
-        score = function.score
+        metrics = function.score_details
+
         # log attributes of the function
         print(f'================= Evaluated Function =================')
         print(f'{function_str}')
         print(f'------------------------------------------------------')
-        print(f'Score        : {str(score)}')
-        print(f'Sample time  : {str(sample_time)}')
-        print(f'Evaluate time: {str(evaluate_time)}')
-        print(f'Sample orders: {str(sample_orders)}')
+        print(f"Performance: {metrics['performance']:.4f}")
+        print(f"Runtime    : {metrics['runtime']:.4f}s")
+        print(f"Cyclomatic : {metrics['cc']:.2f}")
+        print(f"Composite  : {metrics['composite']:.4f}")
         print(f'======================================================\n\n')
 
         # update best function
-        if function.score is not None and score > self._cur_best_program_score:
-            self._cur_best_program_score = score
+        if metrics['composite'] is not None and metrics['composite'] > self._cur_best_program_score:
+            self._cur_best_program_score = metrics['composite']
             self._cur_best_program_sample_order = sample_orders
 
         # update statistics about function
-        if score:
+        if metrics['composite']:
             self._evaluate_success_program_num += 1
         else:
             self._evaluate_failed_program_num += 1
