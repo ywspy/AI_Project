@@ -58,10 +58,7 @@ def _reduce_score(scores_per_test: ScoresPerTest) -> float:
     """
     # TODO RZ: change the code to average the score of each test.
     # return scores_per_test[list(scores_per_test.keys())[-1]]
-    comp = scores_per_test["composite"]
-    if not np.isfinite(comp):
-        comp = -1e20
-    return comp
+    return scores_per_test["composite"]
 
 
 def _get_signature(scores_per_test: ScoresPerTest) -> Signature:
@@ -69,7 +66,7 @@ def _get_signature(scores_per_test: ScoresPerTest) -> Signature:
     comp = scores_per_test["composite"]
     if not np.isfinite(comp):
         comp = -1e20
-    return (0.0,)
+    return (scores_per_test["composite"],)
 
 
 @dataclasses.dataclass(frozen=True)
