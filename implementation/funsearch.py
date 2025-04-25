@@ -90,6 +90,8 @@ def main(
     initial = template.get_function(function_to_evolve).body
     evaluators[0].analyse(initial, island_id=None, version_generated=None, profiler=profiler)
 
+    sampler.Sampler._global_samples_nums = 0
+
     # Set global max sample nums.
     samplers = [sampler.Sampler(database, evaluators, config.samples_per_prompt, max_sample_nums=max_sample_nums, llm_class=class_config.llm_class)
                 for _ in range(config.num_samplers)]
