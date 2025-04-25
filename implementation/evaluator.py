@@ -212,6 +212,8 @@ class Evaluator:
             **kwargs,
         )
 
+        new_function.score_details = metrics
+
         # 4) Prepare scores_per_test with only composite
         if ok and "composite" in metrics:
             scores_per_test = {"composite": metrics["composite"]}
