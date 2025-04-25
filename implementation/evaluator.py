@@ -229,7 +229,11 @@ class Evaluator:
             namespace: dict = {}
             exec(program, namespace)
             py_func = namespace[self._function_to_run]
-            metrics = multiobj_score(py_func, list(self._inputs))
+            if isinstance(self._inputs, dict):
+                test_inputs = list(self._inputs.values())
+            else:
+                test_inputs = list(self._inputs)
+            metrics = multiobj_score(py_func, test_inputs)
             scores_per_test["composite"] = metrics["composite"]
 
             self._database.register_program(
