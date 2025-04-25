@@ -63,8 +63,7 @@ def _reduce_score(scores_per_test: ScoresPerTest) -> float:
 
 def _get_signature(scores_per_test: ScoresPerTest) -> Signature:
     """Represents test scores as a canonical signature."""
-    comp = scores_per_test["composite"]
-    return (round(comp, 2),)
+    return (0.0,)
 
 
 @dataclasses.dataclass(frozen=True)
