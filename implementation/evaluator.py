@@ -118,6 +118,7 @@ def _sample_to_program(
     program = copy.deepcopy(template)
     evolved_function = program.get_function(function_to_evolve)
     evolved_function.body = body
+    evolved_function.source = program
     return evolved_function, str(program)
 
 
