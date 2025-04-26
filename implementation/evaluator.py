@@ -49,55 +49,51 @@ class _FunctionLineVisitor(ast.NodeVisitor):
 
 
 def _trim_function_body(generated_code: str) -> str:
-    """Extracts the body of the generated function, trimming anything after it.
-
-    RZ: the arg generated_code must only include the body of the generated function (an example is shown below):
-    --------------
-        a = item
-        return a
-    --------------
-    Please note that the indentation is REQUIRED !!!
     """
-    if not generated_code:
-        return ''
+    Return only the *body* of the generated function, stripped of anything
+    that follows it.  Always returns a string ending with exactly one blank
+    line, or the empty string on total failure.
 
-    # If the code includes function header, we don't add the fake header
-    if generated_code.strip().startswith('def '):
-        # The code already contains the full function definition, so no need for a fake header
-        code = generated_code
-    else:
-        # If the function body is provided alone, add a fake function header to parse it correctly
-        code = f'def fake_function_header():\n{generated_code}'
+    The caller promises that *generated_code* is either
+        (a) the whole ``def …`` block produced by the LLM, **or**
+        (b) just the body (indented) without the header.
+    """
+    import ast, textwrap
 
-    # Get the function name dynamically (from 'def ' part)
-    function_name = code.split('(')[0].split()[1]  # Extract the function name from the definition line
+    if not generated_code.strip():
+        return ""
 
-    tree = None
-    # We keep trying and deleting code from the end until the parser succeeds.
-    while tree is None:
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as e:
-            # Debugging log to see which part is causing the issue
-            print(f"SyntaxError at line {e.lineno}: {e.text}")
-            # Remove code after the error
-            code = '\n'.join(code.splitlines()[:e.lineno - 1])
+    # ── 1. guarantee we can parse by wrapping in a dummy header ───────────
+    wrapped = (
+        generated_code
+        if generated_code.lstrip().startswith("def ")
+        else f"def _tmp():\n{generated_code}"
+    )
 
-            # If truncation removes too much of the body, stop
-            if len(code.splitlines()) < 3:
-                print("Warning: Code was truncated too much, returning empty string.")
-                return ''
+    try:
+        tree = ast.parse(wrapped)
+    except SyntaxError:
+        # Give up: return the original (indented) and let downstream
+        # error-handling decide what to do.
+        return textwrap.indent(generated_code.rstrip() + "\n", " " * 4)
 
-    if not code:
-        return ''
+    # ── 2. find the first FunctionDef node ────────────────────────────────
+    fn_node = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef))
 
-    # Use _FunctionLineVisitor to locate the end of the function body
-    visitor = _FunctionLineVisitor(function_name)  # Pass the dynamic function name
-    visitor.visit(tree)
-    body_lines = code.splitlines()[1:visitor.function_end_line]
-    if not body_lines:
-        return ''
-    return '\n'.join(body_lines) + '\n\n'
+    # If this is the dummy wrapper, descend to its inner FunctionDef
+    if fn_node.name == "_tmp":
+        inner = next((n for n in fn_node.body if isinstance(n, ast.FunctionDef)), None)
+        if inner is not None:
+            fn_node = inner
+
+    lines = wrapped.splitlines()
+
+    start = fn_node.body[0].lineno - 1          # 0-based index
+    end   = fn_node.end_lineno                  # inclusive, already 1-based
+
+    body = "\n".join(lines[start:end]).rstrip() + "\n\n"
+    return body
+
 
 
 
