@@ -1,6 +1,3 @@
-# implemented by RZ
-# profile the experiment using tensorboard
-
 from __future__ import annotations
 
 import os.path

@@ -1,31 +1,3 @@
-# Copyright 2023 DeepMind Technologies Limited
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
-"""Tools for manipulating Python code.
-
-It implements 2 classes representing unities of code:
-- Function, containing all the information we need about functions: name, args,
-  body and optionally a return type and a docstring.
-- Program, which contains a code preface (which could be imports, global
-  variables and classes, ...) and a list of Functions.
-
-RZ: The frequently used word 'call' in this file refers to the name of the function. For example the following:
-def add_five(param) -> int:
-    return param + 5
-The 'call' of the function is 'add_file'.
-"""
 from __future__ import annotations
 
 import ast
@@ -133,21 +105,6 @@ class ProgramVisitor(ast.NodeVisitor):
         if node.col_offset == 0:  # We only care about first level functions.
             self._current_function = node.name
 
-            # -------------------------------------------------------------------------
-            # RZ: BUGS!!! 这里问题很大 没有考虑到一些极端的情况 例如解析到的第一个函数就有装饰器
-            # 如果解析的第一个函数有装饰器 那么装饰器也会被保留在前面的代码片段中
-            # 但在算法的流程中 这个装饰器是无效的 后续评估会报错
-            # Here is an issue: some cases were not taken into consideration.
-            # For instance, if the first parsed function has decorators,
-            # these decorators will also be retained in the preceding code snippet.
-            # However, in the algorithm's flow, these decorators are invalid,
-            # leading to subsequent evaluations reporting errors.
-            # -------------------------------------------------------------------------
-            # if not self._functions:
-            #     self._preface = '\n'.join(self._codelines[:node.lineno - 1])
-            # -------------------------------------------------------------------------
-
-            # TODO Fix bugs 判断下如果函数 is decorated, 找到装饰器的最小行号, 并只保留其上面的部分作为 preface
             if not self._functions:
                 has_decorators = bool(node.decorator_list)
                 if has_decorators:
